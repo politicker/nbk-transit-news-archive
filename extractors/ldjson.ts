@@ -1,9 +1,7 @@
 import { DOMParser } from "jsr:@b-fuze/deno-dom@0.1.47"
 import { Graph, LDJSONRoot } from "../gothomist.d.ts"
 
-export const extractFromLDJSON = async (
-    url: string,
-): Promise<string[]> => {
+export async function extractFromLDJSON(url: string) {
     const res = await fetch(url)
     const html = await res.text()
     const doc = new DOMParser().parseFromString(html, "text/html")
@@ -14,7 +12,7 @@ export const extractFromLDJSON = async (
     if (maybeJSON) {
         data = JSON.parse(maybeJSON)
     } else {
-        return ["", "", ""]
+        return ["", "", ""] as const
     }
 
     const graphOrGraphRoot = ("@graph" in data) ? data["@graph"] : data
@@ -34,7 +32,7 @@ export const extractFromLDJSON = async (
     // console.log("Authors", authors)
     // console.log("Headline", headline)
 
-    return ["", "", ""]
+    return ["", "", ""] as const
 }
 
 function extractDataFromGraph(graph: Graph) {
@@ -47,7 +45,7 @@ function extractDataFromGraph(graph: Graph) {
 
     const authorData = graph.author
     if (!authorData) {
-        return ["", "", ""]
+        return ["", "", ""] as const
     }
 
     if (!Array.isArray(authorData)) {
@@ -58,5 +56,5 @@ function extractDataFromGraph(graph: Graph) {
         }
     }
 
-    return [headline, publicationDate, authors.join(", ")]
+    return [headline, publicationDate, authors.join(", ")] as const
 }

@@ -13,6 +13,7 @@ for (const url of urls) {
   let headline = ""
   let publicationDate = ""
   let authors = ""
+
   for (const extractor of extractors) {
     if (headline && publicationDate && authors) {
       break
