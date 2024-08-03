@@ -39,6 +39,8 @@ for (const url of urls) {
     continue
   }
 
+  console.log("----------------------------------------")
+
   extractedData.push({
     url,
     headline,
