@@ -1,18 +1,28 @@
-import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts"
+import { launch } from "jsr:@astral/astral"
 import "jsr:@std/dotenv/load"
 
-export function add(a: number, b: number): number {
-  return a + b
+console.log("launching browser")
+const browser = await launch({
+  headless: false,
+})
+console.log("browser launched")
+const page = await browser.newPage(
+  "https://gothamist.com/news/lost-evidence-biased-investigation-cited-in-nypds-probe-of-killed-cyclist-mathieu-lefevre",
+  {
+    waitUntil: "load",
+  },
+)
+console.log("page opened")
+
+const json = await page.$('script[type="application/ld+json"]')
+const maybjson = await json?.innerHTML()
+
+let data
+if (maybjson) {
+  data = JSON.parse(maybjson)
 }
 
-// Learn more at https://docs.deno.com/runtime/manual/examples/module_metadata#concepts
-if (import.meta.main) {
-  const browser = await puppeteer.launch()
-  const page = await browser.newPage()
-  await page.goto(
-    "https://gothamist.com/news/lost-evidence-biased-investigation-cited-in-nypds-probe-of-killed-cyclist-mathieu-lefevre",
-  )
+console.log(data)
 
-  console.log("visited page")
-  await browser.close()
-}
+console.log("visited page")
+await browser.close()
