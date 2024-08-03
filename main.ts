@@ -1,28 +1,50 @@
 import { launch } from "jsr:@astral/astral"
 import "jsr:@std/dotenv/load"
+import { stringify } from "jsr:@std/csv"
+import { urls } from "./domains.ts"
+import { extractors } from "./extractors/index.ts"
 
-console.log("launching browser")
-const browser = await launch({
-  headless: false,
-})
-console.log("browser launched")
-const page = await browser.newPage(
-  "https://gothamist.com/news/lost-evidence-biased-investigation-cited-in-nypds-probe-of-killed-cyclist-mathieu-lefevre",
-  {
-    waitUntil: "load",
-  },
-)
-console.log("page opened")
+// Iterate through list of URLS from the sheet
+const extractedData = []
+for (const url of urls) {
+  const u = new URL(url)
+  const domain = u.hostname
+  console.log(`Extracting data from ${domain}`)
+  let headline = ""
+  let publicationDate = ""
+  let authors = ""
+  for (const extractor of extractors) {
+    if (headline && publicationDate && authors) {
+      break
+    }
 
-const json = await page.$('script[type="application/ld+json"]')
-const maybjson = await json?.innerHTML()
+    const [foundHeadline, foundPublicationDate, foundAuthors] = await extractor(
+      url,
+    )
 
-let data
-if (maybjson) {
-  data = JSON.parse(maybjson)
+    if (!headline && foundHeadline) {
+      headline = foundHeadline
+    }
+    if (!publicationDate && foundPublicationDate) {
+      publicationDate = foundPublicationDate
+    }
+    if (!authors && foundAuthors) {
+      authors = foundAuthors
+    }
+  }
+
+  if (!headline || !publicationDate || !authors) {
+    console.error(`Failed to extract data from ${domain}`)
+    continue
+  }
+
+  extractedData.push({
+    url,
+    headline,
+    publicationDate,
+    authors,
+  })
 }
 
-console.log(data)
-
-console.log("visited page")
-await browser.close()
+// Write data to CSV
+stringify(extractedData)

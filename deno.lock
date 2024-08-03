@@ -3,13 +3,17 @@
   "packages": {
     "specifiers": {
       "jsr:@astral/astral": "jsr:@astral/astral@0.4.5",
+      "jsr:@b-fuze/deno-dom@0.1.47": "jsr:@b-fuze/deno-dom@0.1.47",
       "jsr:@deno-library/progress@1.4.9": "jsr:@deno-library/progress@1.4.9",
       "jsr:@std/assert@^0.223.0": "jsr:@std/assert@0.223.0",
       "jsr:@std/async@0.223.0": "jsr:@std/async@0.223.0",
+      "jsr:@std/bytes@^1.0.0-rc.3": "jsr:@std/bytes@1.0.2",
+      "jsr:@std/csv": "jsr:@std/csv@0.224.3",
       "jsr:@std/dotenv": "jsr:@std/dotenv@0.225.0",
       "jsr:@std/fmt@0.221.0": "jsr:@std/fmt@0.221.0",
       "jsr:@std/fs@0.223.0": "jsr:@std/fs@0.223.0",
       "jsr:@std/path@0.223.0": "jsr:@std/path@0.223.0",
+      "jsr:@std/streams@^0.224.4": "jsr:@std/streams@0.224.5",
       "jsr:@zip-js/zip-js@2.7.41": "jsr:@zip-js/zip-js@2.7.41",
       "npm:@types/node": "npm:@types/node@18.16.19"
     },
@@ -23,6 +27,9 @@
           "jsr:@std/path@0.223.0",
           "jsr:@zip-js/zip-js@2.7.41"
         ]
+      },
+      "@b-fuze/deno-dom@0.1.47": {
+        "integrity": "270a888de91329f8ce3849211ece0ad97ce1e8b9a8a774f2bed2f43c8b0ffe8e"
       },
       "@deno-library/progress@1.4.9": {
         "integrity": "86db695ae338cb1ae3ffa46d6f2e6a9cdef33a15c2ace6fa25354a91a9dd3909",
@@ -39,6 +46,15 @@
           "jsr:@std/assert@^0.223.0"
         ]
       },
+      "@std/bytes@1.0.2": {
+        "integrity": "fbdee322bbd8c599a6af186a1603b3355e59a5fb1baa139f8f4c3c9a1b3e3d57"
+      },
+      "@std/csv@0.224.3": {
+        "integrity": "cf9cb88954a029b9997a613f67771d39b4d1602c8ea1a289328c89b48460fae3",
+        "dependencies": [
+          "jsr:@std/streams@^0.224.4"
+        ]
+      },
       "@std/dotenv@0.225.0": {
         "integrity": "44db32932c67df82790a3e6847d7007befb6cc22d71f2f3ee7b7d00e1f0d6c94"
       },
@@ -52,6 +68,12 @@
         "integrity": "593963402d7e6597f5a6e620931661053572c982fc014000459edc1f93cc3989",
         "dependencies": [
           "jsr:@std/assert@^0.223.0"
+        ]
+      },
+      "@std/streams@0.224.5": {
+        "integrity": "bcde7818dd5460d474cdbd674b15f6638b9cd73cd64e52bd852fba2bd4d8ec91",
+        "dependencies": [
+          "jsr:@std/bytes@^1.0.0-rc.3"
         ]
       },
       "@zip-js/zip-js@2.7.41": {
