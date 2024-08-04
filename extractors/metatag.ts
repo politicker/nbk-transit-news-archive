@@ -5,11 +5,23 @@ export async function extractFromOGTag(url: string) {
 	const html = await res.text()
 	const doc = new DOMParser().parseFromString(html, "text/html")
 
-	const title = doc.querySelector('meta[property="og:title"]')?.getAttribute(
+	let title = doc.querySelector('meta[property="og:title"]')?.getAttribute(
 		"content",
 	)
-	const author = doc.querySelector('meta[property="article:author"]')
+
+	if (!title) {
+		title = doc.querySelector("title")?.innerText
+	}
+
+	let author = doc.querySelector('meta[property="article:author"]')
 		?.getAttribute("content")
+
+	if (!author) {
+		author = doc.querySelector('meta[name="author"]')?.getAttribute(
+			"content",
+		)
+	}
+
 	const publishedAt = doc.querySelector(
 		'meta[property="article:published_time"]',
 	)?.getAttribute("content")

@@ -4,11 +4,20 @@ import { stringify } from "jsr:@std/csv"
 import { urls } from "./domains.ts"
 import { extractors } from "./extractors/index.ts"
 
+const alreadySeenDomains = new Set<string>()
+
 // Iterate through list of URLS from the sheet
 const extractedData = []
 for (const url of urls) {
   const u = new URL(url)
   const domain = u.hostname
+
+  if (alreadySeenDomains.has(domain)) {
+    continue
+  } else {
+    alreadySeenDomains.add(domain)
+  }
+
   console.log(`Extracting data from ${domain}`)
   let headline = ""
   let publicationDate = ""
@@ -36,6 +45,16 @@ for (const url of urls) {
 
   if (!headline || !publicationDate || !authors) {
     console.error(`Failed to extract data from ${domain}`)
+    console.log(url)
+    console.error(
+      "headline:",
+      headline,
+      "publicationDate:",
+      publicationDate,
+      "authors:",
+      authors,
+    )
+    console.log("----------------------------------------")
     continue
   }
 

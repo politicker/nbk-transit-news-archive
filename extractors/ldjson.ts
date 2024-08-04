@@ -1,31 +1,38 @@
-import { DOMParser } from "jsr:@b-fuze/deno-dom@0.1.47"
+import { DOMParser, Element } from "jsr:@b-fuze/deno-dom@0.1.47"
 import { Graph, LDJSONRoot } from "../gothomist.d.ts"
 
 export async function extractFromLDJSON(url: string) {
     const res = await fetch(url)
     const html = await res.text()
     const doc = new DOMParser().parseFromString(html, "text/html")
-    const json = doc.querySelector('script[type="application/ld+json"]')
-    const maybeJSON = json?.innerHTML
+    const jsons = doc.querySelectorAll('script[type="application/ld+json"]')
 
-    let data: LDJSONRoot
-    if (maybeJSON) {
-        data = JSON.parse(maybeJSON)
-    } else {
-        return ["", "", ""] as const
-    }
+    // TODO: There is a problem here. We have to essentially do the same thing that main.ts
+    // does where we keep looping until we find the right data. We have to collect data bits
+    // along the way as we loop. Return if we find everything, keep looping if we haven't.
+    for (const json of jsons) {
+        const maybeJSON = (json as Element).innerHTML
 
-    const graphOrGraphRoot = ("@graph" in data) ? data["@graph"] : data
-    if (Array.isArray(graphOrGraphRoot)) {
-        for (const graph of graphOrGraphRoot) {
-            if (!("author" in graph)) {
-                continue
-            }
-
-            return extractDataFromGraph(graph)
+        let data: LDJSONRoot
+        if (maybeJSON) {
+            data = JSON.parse(maybeJSON)
+        } else {
+            continue
+            return ["", "", ""] as const
         }
-    } else {
-        return extractDataFromGraph(graphOrGraphRoot)
+
+        const graphOrGraphRoot = ("@graph" in data) ? data["@graph"] : data
+        if (Array.isArray(graphOrGraphRoot)) {
+            for (const graph of graphOrGraphRoot) {
+                if (!("author" in graph)) {
+                    continue
+                }
+
+                return extractDataFromGraph(graph)
+            }
+        } else {
+            return extractDataFromGraph(graphOrGraphRoot)
+        }
     }
 
     // console.log("Date Published", publicationDate)
@@ -48,12 +55,14 @@ function extractDataFromGraph(graph: Graph) {
         return ["", "", ""] as const
     }
 
-    if (!Array.isArray(authorData)) {
-        authors.push(authorData.name)
-    } else {
+    if (Array.isArray(authorData)) {
         for (const author of authorData) {
             authors.push(author.name)
         }
+    } else if (typeof authorData === "string") {
+        authors.push(authorData)
+    } else {
+        authors.push(authorData.name)
     }
 
     return [headline, publicationDate, authors.join(", ")] as const

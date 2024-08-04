@@ -14,7 +14,7 @@ export interface Graph {
     description?: string
     datePublished?: string
     dateModified?: string
-    author?: Author[] | Author
+    author?: Author[] | Author | string
     publisher?: Publisher
     isAccessibleForFree?: boolean
     itemListElement?: ItemListElement[]
