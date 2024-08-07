@@ -1,7 +1,5 @@
 import { launch } from "jsr:@astral/astral"
 import "jsr:@std/dotenv/load"
-import { stringify } from "jsr:@std/csv"
-import { urls } from "./domains.ts"
 import { extractors } from "./extractors/index.ts"
 import { parse } from "https://deno.land/std@0.84.0/flags/mod.ts"
 
@@ -31,14 +29,14 @@ const flags = parse(Deno.args)
 // const alreadySeenDomains = new Set<string>()
 
 await doc.loadInfo()
-const sheet = doc.sheetsByTitle["Other "]
+const sheet = doc.sheetsByTitle["Other"]
 
 interface Row {
   Media: string // publication (e.g. NY Times)
   Date: string // date published
   Byline: string // author
-  Headline: string
-  URL: string
+  Headline: string // article headline
+  URL: string // url of the article
 }
 const rows = await sheet.getRows<Row>()
 
@@ -62,48 +60,54 @@ for (const row of rows) {
   // }
 
   console.log(`${row.rowNumber} - extracting data from ${domain}`)
-  let headline = ""
-  let publicationDate = ""
-  let authors = ""
+
+  let foundHeadline = ""
+  let foundPublicationDate = ""
+  let foundAuthors = ""
+  let foundSiteTitle = ""
 
   for (const extractor of extractors) {
-    if (headline && publicationDate && authors) {
+    if (foundHeadline && foundPublicationDate && foundAuthors) {
       break
     }
 
-    let foundHeadline = ""
-    let foundPublicationDate = ""
-    let foundAuthors = ""
     try {
-      ;[foundHeadline, foundPublicationDate, foundAuthors] = await extractor(
-        url,
-      )
+      const {
+        headline,
+        publicationDate,
+        author,
+        siteTitle,
+      } = await extractor(url)
+
+      if (!foundHeadline && headline) {
+        foundHeadline = headline
+      }
+      if (!foundPublicationDate && publicationDate) {
+        foundPublicationDate = publicationDate
+      }
+      if (!foundAuthors && author) {
+        foundAuthors = author
+      }
+      if (!foundSiteTitle && siteTitle) {
+        foundSiteTitle = siteTitle
+      }
     } catch (e) {
       console.error(
-        `${row.rowNumber} - error extracting data from ${domain}`,
+        `${row.rowNumber} - error extracting data extractor:${extractor.name} domain:${domain}`,
         e,
       )
-    }
-
-    if (!headline && foundHeadline) {
-      headline = foundHeadline
-    }
-    if (!publicationDate && foundPublicationDate) {
-      publicationDate = foundPublicationDate
-    }
-    if (!authors && foundAuthors) {
-      authors = foundAuthors
+      continue
     }
   }
 
   row.assign({
-    Headline: headline,
-    Date: formatDate(publicationDate),
-    Byline: authors,
+    Media: foundSiteTitle || row.get("Media"),
+    Headline: foundHeadline,
+    Date: formatDate(foundPublicationDate),
+    Byline: foundAuthors,
 
-    // These should be left alone, but assign requires us to set them
+    // These should be left alone, but .assign() requires us to set them
     URL: url,
-    Media: row.get("Media"),
   })
 
   try {
