@@ -1,48 +1,50 @@
 import { DOMParser, Element } from "jsr:@b-fuze/deno-dom@0.1.47"
-import { Graph, LDJSONRoot } from "../gothomist.d.ts"
+import { Graph } from "../gothomist.d.ts"
 
 export async function extractFromLDJSON(url: string) {
     const res = await fetch(url)
     const html = await res.text()
     const doc = new DOMParser().parseFromString(html, "text/html")
-    const jsons = doc.querySelectorAll('script[type="application/ld+json"]')
+    const jsonScriptTags = doc.querySelectorAll(
+        'script[type="application/ld+json"]',
+    )
 
-    // TODO: There is a problem here. We have to essentially do the same thing that main.ts
-    // does where we keep looping until we find the right data. We have to collect data bits
-    // along the way as we loop. Return if we find everything, keep looping if we haven't.
-    for (const json of jsons) {
+    const authors: string[] = []
+    let headline = ""
+    let publicationDate = ""
+
+    for (const json of jsonScriptTags) {
+        if (authors.length && headline && publicationDate) break
+
         const maybeJSON = (json as Element).innerHTML
+        if (!maybeJSON) continue
 
-        let data: LDJSONRoot
-        if (maybeJSON) {
-            data = JSON.parse(maybeJSON)
-        } else {
-            continue
-            return ["", "", ""] as const
-        }
+        const data = JSON.parse(maybeJSON)
+        const graphOrGraphRoot = data["@graph"] ?? data
 
-        const graphOrGraphRoot = ("@graph" in data) ? data["@graph"] : data
-        if (Array.isArray(graphOrGraphRoot)) {
-            for (const graph of graphOrGraphRoot) {
-                if (!("author" in graph)) {
-                    continue
-                }
+        const graphs = Array.isArray(graphOrGraphRoot)
+            ? graphOrGraphRoot
+            : [graphOrGraphRoot]
+        for (const graph of graphs) {
+            if (!("author" in graph)) continue
 
-                return extractDataFromGraph(graph)
+            const [foundHeadline, foundPublicationDate, foundAuthor] =
+                extractDataFromGraph(graph)
+
+            if (foundAuthor) authors.push(foundAuthor)
+            if (!headline && foundHeadline) headline = foundHeadline
+            if (!publicationDate && foundPublicationDate) {
+                publicationDate = foundPublicationDate
             }
-        } else {
-            return extractDataFromGraph(graphOrGraphRoot)
+
+            if (authors.length && headline && publicationDate) break
         }
     }
 
-    // console.log("Date Published", publicationDate)
-    // console.log("Authors", authors)
-    // console.log("Headline", headline)
-
-    return ["", "", ""] as const
+    return [headline, publicationDate, authors.join(", ")] as const
 }
 
-function extractDataFromGraph(graph: Graph) {
+function extractDataFromGraph(graph: Graph): [string, string, string] {
     const authors: string[] = []
     let headline: string = ""
     let publicationDate: string = ""
