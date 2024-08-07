@@ -1,11 +1,7 @@
 export function formatDate(isoDateString: string): string {
-	if (!isoDateString) {
-		return isoDateString
-	}
-
 	const date = new Date(isoDateString)
 	if (isNaN(date.getTime())) {
-		return ""
+		return isoDateString
 	}
 
 	const options: Intl.DateTimeFormatOptions = {
