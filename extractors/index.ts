@@ -4,7 +4,14 @@ import { extractFromOGTag } from "./metatag.ts"
 import { extractFromPPS } from "./pps.ts"
 import { dateFromURL } from "./urlDate.ts"
 
-type ExtractorFn = (url: string) => Promise<readonly [string, string, string]>
+export interface ExtractedData {
+	headline?: string | null
+	publicationDate?: string | null
+	author?: string | null
+	siteTitle?: string | null
+}
+
+type ExtractorFn = (url: string) => Promise<ExtractedData>
 
 export const extractors: ExtractorFn[] = [
 	extractFromLDJSON,

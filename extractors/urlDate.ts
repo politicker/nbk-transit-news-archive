@@ -1,11 +1,13 @@
 export async function dateFromURL(url: string) {
 	const date = url.match(/\/(\d{4})\/(\d{2})\/(\d{2})\//)
 	if (!date) {
-		return ["", "", ""] as const
+		return {}
 	}
 
 	const [_, year, month, day] = date
-	const publishedAt = `${year}-${month}-${day}`
+	const publicationDate = `${year}-${month}-${day}`
 
-	return ["", publishedAt, ""] as const
+	return {
+		publicationDate,
+	}
 }

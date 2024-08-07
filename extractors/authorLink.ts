@@ -9,9 +9,11 @@ export async function authorLink(url: string) {
     for (const link of links) {
         const a = link as Element
         if (a.innerText !== "") {
-            return ["", "", a.innerText] as const
+            return {
+                author: a.innerText,
+            }
         }
     }
 
-    return ["", "", ""] as const
+    return {}
 }

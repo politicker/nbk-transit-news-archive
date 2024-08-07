@@ -17,9 +17,12 @@ export async function extractFromPPS(url: string) {
 
 	const author = authorsElm?.textContent
 
-	const publishedAt = doc.querySelector(
+	const publicationDate = doc.querySelector(
 		"body > div.s-blogsection > div.b-bloginfo4 > div > div:nth-child(2)",
 	)?.textContent
 
-	return ["", publishedAt ?? "", author ?? ""] as const
+	return {
+		publicationDate,
+		author,
+	}
 }

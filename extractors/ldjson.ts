@@ -41,7 +41,11 @@ export async function extractFromLDJSON(url: string) {
         }
     }
 
-    return [headline, publicationDate, authors.join(", ")] as const
+    return {
+        headline,
+        publicationDate,
+        author: authors.join(", "),
+    }
 }
 
 function extractDataFromGraph(graph: Graph): [string, string, string] {
