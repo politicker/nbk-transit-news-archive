@@ -15,8 +15,12 @@
             "runtimeArgs": [
                 "run",
                 "--inspect-wait",
-                "--allow-all"
+                "--allow-all",
             ],
+            // "args": [
+            //     "-u",
+            //     "thirteen.org"
+            // ],
             "attachSimplePort": 9229
         }
     ]
