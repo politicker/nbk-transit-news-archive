@@ -42,8 +42,8 @@ export async function extractFromLDJSON(url: string) {
     }
 
     return {
-        headline,
-        publicationDate,
+        headline: headline.trim(),
+        publicationDate: publicationDate.trim(),
         author: authors.join(", "),
     }
 }

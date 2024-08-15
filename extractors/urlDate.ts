@@ -8,6 +8,6 @@ export async function dateFromURL(url: string) {
 	const publicationDate = `${year}-${month}-${day}`
 
 	return {
-		publicationDate,
+		publicationDate: publicationDate.trim(),
 	}
 }

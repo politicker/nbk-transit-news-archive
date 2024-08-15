@@ -10,7 +10,7 @@ export async function authorLink(url: string) {
         const a = link as Element
         if (a.innerText !== "") {
             return {
-                author: a.innerText,
+                author: a.innerText.trim(),
             }
         }
     }

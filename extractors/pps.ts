@@ -22,7 +22,7 @@ export async function extractFromPPS(url: string) {
 	)?.textContent
 
 	return {
-		publicationDate,
-		author,
+		publicationDate: publicationDate?.trim(),
+		author: author?.trim(),
 	}
 }
