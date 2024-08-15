@@ -26,9 +26,13 @@ export async function extractFromOGTag(url: string) {
 		'meta[property="article:published_time"]',
 	)?.getAttribute("content")
 
+	const siteTitle = doc.querySelector('meta[property="og:site_name"]')
+		?.getAttribute("content")
+
 	return {
-		headline,
-		publicationDate,
-		author,
+		headline: headline?.trim(),
+		publicationDate: publicationDate?.trim(),
+		author: author?.trim(),
+		siteTitle: siteTitle?.trim(),
 	}
 }
