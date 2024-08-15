@@ -4,9 +4,11 @@ import { extractors } from "./extractors/index.ts"
 import { parse } from "https://deno.land/std@0.84.0/flags/mod.ts"
 
 import { readJson } from "https://deno.land/std@0.66.0/fs/read_json.ts"
-import { GoogleSpreadsheet } from "npm:google-spreadsheet"
+import { GoogleSpreadsheet, GoogleSpreadsheetRow } from "npm:google-spreadsheet"
 import { JWT } from "npm:google-auth-library"
 import { formatDate } from "./utils.ts"
+import { AxiosError } from "npm:axios"
+import * as HTMLEntities from "https://deno.land/std@0.224.0/html/entities.ts"
 
 const credentials = await readJson("credentials.json") as {
   client_email: string
@@ -21,7 +23,7 @@ const serviceAccountAuth = new JWT({
 })
 
 const doc = new GoogleSpreadsheet(
-  "1aFnO_zJ-9UbbLgQKlRGykKq8syBWqZtOHXmdF9zgUrQ", // harrison test sheet
+  "1QvWha8j4O9E1WI-ROAojqdWAUfY4ZvaVh0V0AIleuwY", // real sheet :O
   serviceAccountAuth,
 )
 
@@ -42,9 +44,7 @@ interface Row {
 const rows = await sheet.getRows<Row>()
 
 for (const row of rows) {
-  if (
-    row.get("to") && row.get("Byline") && row.get("Date") && row.get("Headline")
-  ) {
+  if (row.get("Headline")) {
     continue
   }
 
@@ -106,21 +106,35 @@ for (const row of rows) {
   }
 
   row.assign({
-    to: foundSiteTitle || row.get("to").trim(),
-    Headline: foundHeadline,
+    to: HTMLEntities.unescape(foundSiteTitle || row.get("to").trim()),
+    Headline: HTMLEntities.unescape(foundHeadline).replace("&bull;", "•"),
     Date: formatDate(foundPublicationDate),
-    Byline: foundAuthors,
+    Byline: HTMLEntities.unescape(foundAuthors),
 
     // These should be left alone, but .assign() requires us to set them
     URL: url,
   })
 
-  try {
-    console.log(`${row.rowNumber} - saving row`)
-    await row.save()
-  } catch (e) {
-    console.error(`${row.rowNumber} - error updating row`, e)
+  let attempts = 0
+
+  while (true) {
+    try {
+      await row.save()
+      break
+    } catch (e: unknown) {
+      if (e instanceof AxiosError && e.response?.status === 429) {
+        attempts++
+        console.log("rate limited, waiting 5 seconds. attempts: ", attempts)
+        await new Promise((resolve) => setTimeout(resolve, 5000))
+        continue
+      }
+
+      console.error(`${row.rowNumber} - unknown error saving row`, e)
+      break
+    }
   }
 
-  console.log("----------------------------------------")
+  attempts = 0
+
+  console.log(" ----------------------------------------")
 }
