@@ -32,7 +32,8 @@ await doc.loadInfo()
 const sheet = doc.sheetsByTitle["Other"]
 
 interface Row {
-  Media: string // publication (e.g. NY Times)
+  to: string
+  // Media: string // publication (e.g. NY Times)
   Date: string // date published
   Byline: string // author
   Headline: string // article headline
@@ -41,7 +42,9 @@ interface Row {
 const rows = await sheet.getRows<Row>()
 
 for (const row of rows) {
-  if (row.get("Byline")) {
+  if (
+    row.get("to") && row.get("Byline") && row.get("Date") && row.get("Headline")
+  ) {
     continue
   }
 
@@ -67,7 +70,9 @@ for (const row of rows) {
   let foundSiteTitle = ""
 
   for (const extractor of extractors) {
-    if (foundHeadline && foundPublicationDate && foundAuthors) {
+    if (
+      foundHeadline && foundPublicationDate && foundAuthors && foundSiteTitle
+    ) {
       break
     }
 
@@ -101,7 +106,7 @@ for (const row of rows) {
   }
 
   row.assign({
-    Media: foundSiteTitle || row.get("Media"),
+    to: foundSiteTitle || row.get("to").trim(),
     Headline: foundHeadline,
     Date: formatDate(foundPublicationDate),
     Byline: foundAuthors,
