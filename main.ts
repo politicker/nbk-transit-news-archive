@@ -1,37 +1,16 @@
-import { launch } from "jsr:@astral/astral"
 import "jsr:@std/dotenv/load"
 import { extractors } from "./extractors/index.ts"
 import { parse } from "https://deno.land/std@0.84.0/flags/mod.ts"
-
-import { readJson } from "https://deno.land/std@0.66.0/fs/read_json.ts"
-import { GoogleSpreadsheet, GoogleSpreadsheetRow } from "npm:google-spreadsheet"
-import { JWT } from "npm:google-auth-library"
 import { formatDate } from "./utils.ts"
 import { AxiosError } from "npm:axios"
 import * as HTMLEntities from "https://deno.land/std@0.224.0/html/entities.ts"
-
-const credentials = await readJson("credentials.json") as {
-  client_email: string
-  private_key: string
-}
-
-// Initialize auth - see https://theoephraim.github.io/node-google-spreadsheet/#/guides/authentication
-const serviceAccountAuth = new JWT({
-  email: credentials.client_email,
-  key: credentials.private_key,
-  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-})
-
-const doc = new GoogleSpreadsheet(
-  "1QvWha8j4O9E1WI-ROAojqdWAUfY4ZvaVh0V0AIleuwY", // real sheet :O
-  serviceAccountAuth,
-)
+import { spreadsheet } from "./src/spreadsheet.ts"
 
 const flags = parse(Deno.args)
 // const alreadySeenDomains = new Set<string>()
 
-await doc.loadInfo()
-const sheet = doc.sheetsByTitle["Other"]
+await spreadsheet.loadInfo()
+const sheet = spreadsheet.sheetsByTitle["Other"]
 
 interface Row {
   to: string
@@ -106,17 +85,17 @@ for (const row of rows) {
   }
 
   row.assign({
-    to: HTMLEntities.unescape(foundSiteTitle || row.get("to").trim()),
-    Headline: HTMLEntities.unescape(foundHeadline).replace("&bull;", "•"),
-    Date: formatDate(foundPublicationDate),
-    Byline: HTMLEntities.unescape(foundAuthors),
+    to: HTMLEntities.unescape(row.get("to").trim() || foundSiteTitle),
+    Headline: row.get("Headline") ||
+      HTMLEntities.unescape(foundHeadline).replace("&bull;", "•"),
+    Date: row.get("Date") || formatDate(foundPublicationDate),
+    Byline: row.get("Byline") || HTMLEntities.unescape(foundAuthors),
 
     // These should be left alone, but .assign() requires us to set them
     URL: url,
   })
 
   let attempts = 0
-
   while (true) {
     try {
       await row.save()
@@ -133,7 +112,6 @@ for (const row of rows) {
       break
     }
   }
-
   attempts = 0
 
   console.log(" ----------------------------------------")
