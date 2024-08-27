@@ -6,7 +6,7 @@
     "configurations": [
         {
             "request": "launch",
-            "name": "main",
+            "name": "annotate",
             "type": "node",
             "program": "${workspaceFolder}/main.ts",
             "cwd": "${workspaceFolder}",
@@ -17,10 +17,14 @@
                 "--inspect-wait",
                 "--allow-all",
             ],
-            // "args": [
-            //     "-u",
-            //     "gothamist.com"
-            // ],
+            "args": [
+                "annotate",
+                "--sheet-id",
+                "1aFnO_zJ-9UbbLgQKlRGykKq8syBWqZtOHXmdF9zgUrQ", // Harrison copy,
+                "--sheet-name",
+                "Other",
+                "--process-once"
+            ],
             "attachSimplePort": 9229,
             "envFile": "${workspaceFolder}/.env"
         },
@@ -28,7 +32,7 @@
             "request": "launch",
             "name": "archive",
             "type": "node",
-            "program": "${workspaceFolder}/archive.ts",
+            "program": "${workspaceFolder}/main.ts",
             "cwd": "${workspaceFolder}",
             "env": {},
             "runtimeExecutable": "deno",
@@ -37,10 +41,14 @@
                 "--inspect-wait",
                 "--allow-all",
             ],
-            // "args": [
-            //     "-u",
-            //     "gothamist.com"
-            // ],
+            "args": [
+                "archive",
+                "--sheet-id",
+                "1aFnO_zJ-9UbbLgQKlRGykKq8syBWqZtOHXmdF9zgUrQ", // Harrison copy,
+                "--sheet-name",
+                "Other",
+                "--process-once"
+            ],
             "attachSimplePort": 9229,
             "envFile": "${workspaceFolder}/.env"
         }
