@@ -42,7 +42,10 @@ export function savePDFLocally(
 	Deno.writeFileSync(path, pdfBytes)
 }
 
-export async function uploadToGCS(pdfBytes: Uint8Array, rawFilename: string) {
+export async function uploadToGCS(
+	pdfBytes: Uint8Array,
+	rawFilename: string,
+): Promise<string> {
 	const storage = await newStorageClient()
 	const bucketName = Deno.env.get("STORAGE_BUCKET")
 
@@ -59,4 +62,6 @@ export async function uploadToGCS(pdfBytes: Uint8Array, rawFilename: string) {
 		},
 		resumable: false, // Optional: use resumable uploads for large files
 	})
+
+	return `https://console.cloud.google.com/storage/browser/_details/${bucketName}/${filename}`
 }
