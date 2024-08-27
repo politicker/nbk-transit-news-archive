@@ -1,5 +1,5 @@
 import { DOMParser, Element } from "jsr:@b-fuze/deno-dom@0.1.47"
-import { Graph } from "../gothomist.d.ts"
+import { Graph } from "../../gothomist.d.ts"
 
 export async function extractFromLDJSON(url: string) {
     const res = await fetch(url)

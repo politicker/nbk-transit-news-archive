@@ -1,6 +1,6 @@
 import { JWT } from "npm:google-auth-library"
 import { GoogleSpreadsheet } from "npm:google-spreadsheet"
-import { loadGoogleCredentials } from "../utils.ts"
+import { loadGoogleCredentials } from "./utils.ts"
 
 const credentials = await loadGoogleCredentials()
 

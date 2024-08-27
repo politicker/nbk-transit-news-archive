@@ -1,5 +1,5 @@
 import { Storage } from "npm:@google-cloud/storage"
-import { loadGoogleCredentials } from "../utils.ts"
+import { loadGoogleCredentials } from "./utils.ts"
 
 async function newStorageClient() {
 	const credentials = await loadGoogleCredentials()
@@ -42,7 +42,7 @@ export function savePDFLocally(
 	Deno.writeFileSync(path, pdfBytes)
 }
 
-export async function uploadPDF(pdfBytes: Uint8Array, rawFilename: string) {
+export async function uploadToGCS(pdfBytes: Uint8Array, rawFilename: string) {
 	const storage = await newStorageClient()
 	const bucketName = Deno.env.get("STORAGE_BUCKET")
 
