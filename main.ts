@@ -1,118 +1,52 @@
 import "jsr:@std/dotenv/load"
-import { extractors } from "./extractors/index.ts"
-import { parse } from "https://deno.land/std@0.84.0/flags/mod.ts"
-import { formatDate } from "./utils.ts"
-import { AxiosError } from "npm:axios"
-import * as HTMLEntities from "https://deno.land/std@0.224.0/html/entities.ts"
-import { spreadsheet } from "./src/spreadsheet.ts"
+import { archiveWebpage } from "./src/commands/archive-webpage.ts"
+import { extractMetadataFromWebpage } from "./src/commands/extract-metadata.ts"
+import { Command } from "https://deno.land/x/cliffy@v1.0.0-rc.4/command/mod.ts"
 
-const flags = parse(Deno.args)
-// const alreadySeenDomains = new Set<string>()
-
-await spreadsheet.loadInfo()
-const sheet = spreadsheet.sheetsByTitle["Other"]
-
-interface Row {
-  to: string
-  // Media: string // publication (e.g. NY Times)
-  Date: string // date published
-  Byline: string // author
-  Headline: string // article headline
-  URL: string // url of the article
+interface CommandArgs {
+  sheetId?: string
+  sheetName?: string
+  domain?: string
+  processOnce?: boolean
 }
-const rows = await sheet.getRows<Row>()
 
-for (const row of rows) {
-  if (row.get("Headline")) {
-    continue
-  }
+export interface ArchiveOptions extends CommandArgs {
+  storeInGCS?: boolean
+  useArchive?: boolean
+}
 
-  const url = row.get("URL")
-  const u = new URL(url)
-  const domain = u.hostname
+export interface ExtractMetadataOptions extends CommandArgs {}
 
-  if (flags.u && !domain.includes(flags.u)) {
-    continue
-  }
-
-  // if (alreadySeenDomains.has(domain)) {
-  //   continue
-  // } else {
-  //   alreadySeenDomains.add(domain)
-  // }
-
-  console.log(`${row.rowNumber} - extracting data from ${domain}`)
-
-  let foundHeadline = ""
-  let foundPublicationDate = ""
-  let foundAuthors = ""
-  let foundSiteTitle = ""
-
-  for (const extractor of extractors) {
-    if (
-      foundHeadline && foundPublicationDate && foundAuthors && foundSiteTitle
-    ) {
-      break
-    }
-
-    try {
-      const {
-        headline,
-        publicationDate,
-        author,
-        siteTitle,
-      } = await extractor(url)
-
-      if (!foundHeadline && headline) {
-        foundHeadline = headline
-      }
-      if (!foundPublicationDate && publicationDate) {
-        foundPublicationDate = publicationDate
-      }
-      if (!foundAuthors && author) {
-        foundAuthors = author
-      }
-      if (!foundSiteTitle && siteTitle) {
-        foundSiteTitle = siteTitle
-      }
-    } catch (e) {
-      console.error(
-        `${row.rowNumber} - error extracting data extractor:${extractor.name} domain:${domain}`,
-        e,
-      )
-      continue
-    }
-  }
-
-  row.assign({
-    to: HTMLEntities.unescape(row.get("to").trim() || foundSiteTitle),
-    Headline: row.get("Headline") ||
-      HTMLEntities.unescape(foundHeadline).replace("&bull;", "•"),
-    Date: row.get("Date") || formatDate(foundPublicationDate),
-    Byline: row.get("Byline") || HTMLEntities.unescape(foundAuthors),
-
-    // These should be left alone, but .assign() requires us to set them
-    URL: url,
+await new Command()
+  .name("nbk")
+  .version("1.0.0")
+  .description("CLI tool for archiving and extracting metadata from web pages")
+  .command("archive", "Archive webpages as PDFs and store them in GCS")
+  .option("-id, --sheet-id <sheetId:string>", "The ID of the Google Sheet")
+  .option("-n, --sheet-name <sheetName:string>", "The name of the Google Sheet")
+  .option(
+    "-d, --domain=<domain:string>",
+    "Only process URLs from the specified domain",
+  )
+  .option("--process-once", "Only process each URL one time")
+  // These are specific to the archive command
+  .option("--use-archive", "Use the Internet Archive for dead links")
+  .option("--store-in-gcs", "Store the PDFs in Google Cloud Storage")
+  .action((options: ArchiveOptions) => {
+    archiveWebpage(options)
   })
-
-  let attempts = 0
-  while (true) {
-    try {
-      await row.save()
-      break
-    } catch (e: unknown) {
-      if (e instanceof AxiosError && e.response?.status === 429) {
-        attempts++
-        console.log("rate limited, waiting 5 seconds. attempts: ", attempts)
-        await new Promise((resolve) => setTimeout(resolve, 5000))
-        continue
-      }
-
-      console.error(`${row.rowNumber} - unknown error saving row`, e)
-      break
-    }
-  }
-  attempts = 0
-
-  console.log(" ----------------------------------------")
-}
+  .command(
+    "annotate",
+    "Annotate spreadsheet rows with metadata from web pages",
+  )
+  .option("-id, --sheet-id <sheetId:string>", "The ID of the Google Sheet")
+  .option("-n, --sheet-name <sheetName:string>", "The name of the Google Sheet")
+  .option(
+    "-d, --domain=<domain:string>",
+    "Only process URLs from the specified domain",
+  )
+  .option("--process-once", "Only process each URL one time")
+  .action((options: ExtractMetadataOptions) => {
+    extractMetadataFromWebpage(options)
+  })
+  .parse(Deno.args)
