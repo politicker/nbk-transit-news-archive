@@ -47,7 +47,8 @@
                 "1aFnO_zJ-9UbbLgQKlRGykKq8syBWqZtOHXmdF9zgUrQ", // Harrison copy,
                 "--sheet-name",
                 "Other",
-                "--process-once"
+                "--process-once",
+                "--store-in-gcs"
             ],
             "attachSimplePort": 9229,
             "envFile": "${workspaceFolder}/.env"
