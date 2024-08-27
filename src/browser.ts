@@ -31,7 +31,7 @@ export async function launchChromiumWithExtensions(
 	command.spawn()
 
 	// Wait for the process to startup
-	await new Promise((resolve) => setTimeout(resolve, 2000))
+	await new Promise((resolve) => setTimeout(resolve, 3000))
 
 	// Fetch the WebSocket Debugging URL
 	const res = await fetch("http://localhost:1337/json/version")
@@ -54,7 +54,7 @@ export async function capturePDF(
 
 	const pdf = await page.pdf({
 		// format: "A4",
-		printBackground: true,
+		printBackground: false,
 	})
 
 	await page.close()
