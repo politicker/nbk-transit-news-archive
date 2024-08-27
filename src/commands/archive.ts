@@ -1,14 +1,18 @@
 import { ArchiveOptions } from "../../main.ts"
 import { capturePDF, launchChromiumWithExtensions } from "../browser.ts"
 import { checkStatus, LinkStatus } from "../linkChecker.ts"
-import { spreadsheet } from "../spreadsheet.ts"
+import { newSpreadsheet } from "../spreadsheet.ts"
 import { savePDFLocally, uploadToGCS } from "../storage.ts"
+import { Row } from "./types.ts"
 
-export async function archiveWebpage(args: ArchiveOptions) {
-	await spreadsheet.loadInfo()
-	const sheet = spreadsheet.sheetsByTitle["Other"]
+export async function archiveCommand(args: ArchiveOptions) {
+	if (!args.sheetId) {
+		throw new Error("Sheet ID is required")
+	}
 
-	const rows = await sheet.getRows()
+	const sheet = await newSpreadsheet(args.sheetId)
+	const rows = await sheet.getRows<Row>()
+
 	const browser = await launchChromiumWithExtensions([])
 	const alreadySeenDomains = new Set<string>()
 
@@ -57,8 +61,11 @@ export async function archiveWebpage(args: ArchiveOptions) {
 
 		try {
 			const pdfBytes = await capturePDF(browser, pageURL)
-			if (args.storeInGCS) {
-				await uploadToGCS(pdfBytes, url.href)
+
+			if (args.storeInGcs) {
+				const resourceURL = await uploadToGCS(pdfBytes, url.href)
+				row.set("Archive", resourceURL)
+				await row.save()
 			} else {
 				savePDFLocally(pdfBytes, url.href)
 			}

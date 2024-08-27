@@ -1,24 +1,19 @@
 import { AxiosError } from "npm:axios"
 import { extractors } from "../extractors/index.ts"
-import { spreadsheet } from "../spreadsheet.ts"
+import { newSpreadsheet } from "../spreadsheet.ts"
 import { formatDate } from "../utils.ts"
 import * as HTMLEntities from "https://deno.land/std@0.224.0/html/entities.ts"
 import { ExtractMetadataOptions } from "../../main.ts"
+import { Row } from "./types.ts"
 
-export async function extractMetadataFromWebpage(args: ExtractMetadataOptions) {
+export async function annotateCommand(args: ExtractMetadataOptions) {
+	if (!args.sheetId) {
+		throw new Error("Sheet ID is required")
+	}
+
 	const alreadySeenDomains = new Set<string>()
 
-	await spreadsheet.loadInfo()
-	const sheet = spreadsheet.sheetsByTitle["Other"]
-
-	interface Row {
-		to: string
-		// Media: string // publication (e.g. NY Times)
-		Date: string // date published
-		Byline: string // author
-		Headline: string // article headline
-		URL: string // url of the article
-	}
+	const sheet = await newSpreadsheet(args.sheetId)
 	const rows = await sheet.getRows<Row>()
 
 	for (const row of rows) {
@@ -26,10 +21,20 @@ export async function extractMetadataFromWebpage(args: ExtractMetadataOptions) {
 			continue
 		}
 
-		const url = row.get("URL")
-		const u = new URL(url)
-		const domain = u.hostname
+		const pageURL = row.get("URL")
+		if (!pageURL) {
+			continue
+		}
 
+		let url: URL
+		try {
+			url = new URL(pageURL)
+		} catch (err: unknown) {
+			console.error(`Error parsing URL ${pageURL}:`, err)
+			continue
+		}
+
+		const domain = url.hostname
 		if (args.domain && !domain.includes(args.domain)) {
 			continue
 		}
@@ -62,7 +67,7 @@ export async function extractMetadataFromWebpage(args: ExtractMetadataOptions) {
 					publicationDate,
 					author,
 					siteTitle,
-				} = await extractor(url)
+				} = await extractor(pageURL)
 
 				if (!foundHeadline && headline) {
 					foundHeadline = headline
@@ -93,7 +98,10 @@ export async function extractMetadataFromWebpage(args: ExtractMetadataOptions) {
 			Byline: row.get("Byline") || HTMLEntities.unescape(foundAuthors),
 
 			// These should be left alone, but .assign() requires us to set them
-			URL: url,
+			URL: pageURL,
+			Archive: row.get("Archive") || "",
+			Category: row.get("Category") || "",
+			Notes: row.get("Notes") || "",
 		})
 
 		let attempts = 0
