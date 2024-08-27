@@ -1,7 +1,6 @@
 import "jsr:@std/dotenv/load"
-import { archiveWebpage } from "./src/commands/archive-webpage.ts"
-import { extractMetadataFromWebpage } from "./src/commands/extract-metadata.ts"
 import { Command } from "https://deno.land/x/cliffy@v1.0.0-rc.4/command/mod.ts"
+import { annotateCommand, archiveCommand } from "./src/commands/index.ts"
 
 interface CommandArgs {
   sheetId?: string
@@ -11,7 +10,7 @@ interface CommandArgs {
 }
 
 export interface ArchiveOptions extends CommandArgs {
-  storeInGCS?: boolean
+  storeInGcs?: boolean
   useArchive?: boolean
 }
 
@@ -33,7 +32,7 @@ await new Command()
   .option("--use-archive", "Use the Internet Archive for dead links")
   .option("--store-in-gcs", "Store the PDFs in Google Cloud Storage")
   .action((options: ArchiveOptions) => {
-    archiveWebpage(options)
+    archiveCommand(options)
   })
   .command(
     "annotate",
@@ -47,6 +46,6 @@ await new Command()
   )
   .option("--process-once", "Only process each URL one time")
   .action((options: ExtractMetadataOptions) => {
-    extractMetadataFromWebpage(options)
+    annotateCommand(options)
   })
   .parse(Deno.args)
