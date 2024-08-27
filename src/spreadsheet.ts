@@ -11,7 +11,12 @@ const serviceAccountAuth = new JWT({
 	scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 })
 
-export const spreadsheet = new GoogleSpreadsheet(
-	"1QvWha8j4O9E1WI-ROAojqdWAUfY4ZvaVh0V0AIleuwY", // real sheet :O
-	serviceAccountAuth,
-)
+export async function newSpreadsheet(id: string) {
+	const spreadsheet = new GoogleSpreadsheet(
+		id,
+		serviceAccountAuth,
+	)
+
+	await spreadsheet.loadInfo()
+	return spreadsheet.sheetsByTitle["Other"]
+}
